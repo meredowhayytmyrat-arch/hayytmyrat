@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tk">
+<head>
+<meta charset="UTF-8">
+<title>Offline Test Sistemi</title>
+<style>
+body { font-family: Arial; background: #f0f0f0; padding: 20px; }
+.container { background: white; padding: 20px; max-width: 600px; margin: auto; border-radius: 10px; }
+button { padding: 10px 20px; margin-top: 15px; cursor: pointer; }
+input, select { width: 100%; padding: 10px; margin-top: 10px; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container" id="loginBox">
+    <h2>Teste giriş</h2>
+    <input id="username" placeholder="Login ýaz" />
+    <input id="password" placeholder="Parol ýaz" type="password" />
+    <button onclick="startTest()">Girmek</button>
+</div>
+
+<div class="container hidden" id="testBox">
+    <h2>Test Başlaýar</h2>
+    <div id="questionBox"></div>
+    <button onclick="nextQuestion()">Indiki sorag</button>
+</div>
+
+<div class="container hidden" id="resultBox">
+    <h2>Netije</h2>
+    <p id="summary"></p>
+    <button onclick="saveResult()">Netijäni Ýatda sakla</button>
+</div>
+
+<script>
+
+// ******************************
+//  20 SORAGLY TEST (A,B,C,D)
+// ******************************
+let questions = [
+ {q:"Dünýäniň iň uly okeany haýsy?", a:["Atlantik","Hindi","Sakit","Demirgazyk"], c:2},
+ {q:"Adam bedeninde näçe süňk bar?", a:["206","180","300","112"], c:0},
+ {q:"Eýran bilen araçäkdeş ýurt haýsy?", a:["Türkmenistan","Pakistan","Gürjüstan","Japan"], c:0},
+ {q:"Gün haýsy ugrundan dogýar?", a:["Günbatar","Gündogar","Demirgazyk","Güney"], c:1},
+ {q:"H2O nämäniň formulasy?", a:["Duş","Suw","Gaz","Nebit"], c:1},
+ {q:"Türkmenistanyň paýtagty?", a:["Mary","Daşoguz","Türkmenabat","Aşgabat"], c:3},
+ {q:"Ýeryüziniň şekili?", a:["Küp","Kwadrat","Sfera","Silindr"], c:2},
+ {q:"Kompiýuteriň beýnisi nämä diýilýär?", a:["CPU","RAM","SSD","USB"], c:0},
+ {q:"ABŞ-nyň paýtagty?", a:["New York","Washington D.C","Miami","Chicago"], c:1},
+ {q:"Iň çalt haýwan?", a:["At","Ýolbars","Çita","Sygyr"], c:2},
+ {q:"Ýel turbinasy nämä ulanýar?", a:["Gün","Kömür","Ýel","Gaz"], c:2},
+ {q:"1 ýyl näçe gün?", a:["360","356","365","370"], c:2},
+ {q:"Telefon kime degişlidir?", a:["Edison","Samsung","Bell","Jobs"], c:2},
+ {q:"Atom bombasy haçan ullanyldy?", a:["1945","1918","1960","1980"], c:0},
+ {q:"Dünýäniň iň uzyn derýasy?", a:["Nil","Amazon","Volga","Eýk"], c:1},
+ {q:"Ýeňil metallar nämeler?", a:["Alýumin","Demir","Mis","Kümüş"], c:0},
+ {q:"Python nämäniň ady?", a:["Oýun","Dilleriň biri","Telefon","Marka"], c:1},
+ {q:"Gün sistema näçeden ybarat?", a:["3","5","8","20"], c:2},
+ {q:"Türkmenistanda pul birligi?", a:["Manat","Dollar","Rubl","Euro"], c:0},
+ {q:"Tizligi ölçär birligi?", a:["Volt","Watt","Newton","km/h"], c:3}
+];
+
+// RANDOM GARYŞ
+questions = questions.sort(() => Math.random() - 0.5);
+
+let current = 0;
+let correct = 0;
+let username = "";
+
+// ******************************
+// LOGIN
+// ******************************
+function startTest() {
+    username = document.getElementById("username").value.trim();
+    let pass = document.getElementById("password").value.trim();
+
+    if(username=="" || pass=="") { alert("Login we parol ýaz"); return; }
+
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("testBox").classList.remove("hidden");
+
+    showQuestion();
+}
+
+// ******************************
+// SORAG GÖRNÜŞİ
+// ******************************
+function showQuestion() {
+    let q = questions[current];
+
+    let html = `<h3>${current+1}) ${q.q}</h3>`;
+    q.a.forEach((ans, i)=>{
+        html += `<div><input type='radio' name='ans' value='${i}'> ${ans}</div>`;
+    });
+
+    document.getElementById("questionBox").innerHTML = html;
+}
+
+// ******************************
+// INDIKI SORAG
+// ******************************
+function nextQuestion() {
+    let selected = document.querySelector("input[name='ans']:checked");
+    if(!selected){ alert("Jogap saýla!"); return; }
+
+    if(parseInt(selected.value) === questions[current].c) correct++;
+
+    current++;
+
+    if(current >= questions.length){
+        showResult();
+    } else {
+        showQuestion();
+    }
+}
+
+// ******************************
+// NETIJE
+// ******************************
+function showResult() {
+    document.getElementById("testBox").classList.add("hidden");
+    document.getElementById("resultBox").classList.remove("hidden");
+
+    let wrong = 20 - correct;
+    let percent = Math.round((correct/20)*100);
+
+    document.getElementById("summary").innerHTML =
+        `Dogry: <b>${correct}</b><br>Ýalňyş: <b>${wrong}</b><br>Prosent: <b>${percent}%</b>`;
+}
+
+// ******************************
+// NETIJENI SAKLAMAK
+// ******************************
+function saveResult() {
+    let db = JSON.parse(localStorage.getItem("results") || "[]");
+
+    db.push({
+        user: username,
+        correct: correct,
+        wrong: 20-correct,
+        percent: Math.round((correct/20)*100),
+        time: new Date().toLocaleString()
+    });
+
+    localStorage.setItem("results", JSON.stringify(db));
+
+    alert("Netije üstünlikli ýatda saklandy!");
+}
+
+</script>
+</body>
+</html>
